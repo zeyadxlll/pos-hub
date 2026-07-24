@@ -6,7 +6,7 @@ import { AuditService } from "./audit-service";
 export class POSService {
   static async checkout(tenantId: string, userId: string, input: SaleCheckoutInput) {
     return await prisma.$transaction(
-      async (tx) => {
+      async (tx: any) => {
         let cashRegister = await tx.cashRegister.findFirst({
           where: { tenantId, isDefault: true },
         });
