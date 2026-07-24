@@ -20,6 +20,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
+        const cleanEmail = credentials.email.trim().toLowerCase();
         let user = await prisma.user.findUnique({
           where: { email: cleanEmail },
           include: { tenant: true },
