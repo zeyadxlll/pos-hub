@@ -28,7 +28,7 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        setError("بيانات الدخول غير صحيحة أو تم إيقاف الاشتراك.");
+        setError(res.error === "CredentialsSignin" ? "بيانات الدخول غير صحيحة أو تم إيقاف الاشتراك." : res.error);
         setLoading(false);
       } else {
         if (cleanEmail === "zeyadadel132123@gmail.com") {
