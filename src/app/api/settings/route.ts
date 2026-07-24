@@ -13,6 +13,9 @@ export async function GET() {
     where: { tenantId: session.user.tenantId },
   });
 
+  const DEFAULT_WARRANTY_TERMS =
+    "• ضمان لمدة 3 شهور ضد عيوب الصناعة.\n• استبدال الجهاز فقط خلال أسبوعين من تاريخ الفاتورة.\n• لا يوجد ترجيع نقدي للجهاز بعد الشراء (استبدال فقط).";
+
   if (!settings) {
     settings = await prisma.companySettings.create({
       data: {
@@ -21,7 +24,13 @@ export async function GET() {
         currency: "EGP",
         taxRate: 0.0,
         autoCashDeduction: true,
+        thermalReceiptFooter: DEFAULT_WARRANTY_TERMS,
       },
+    });
+  } else if (!settings.thermalReceiptFooter) {
+    settings = await prisma.companySettings.update({
+      where: { id: settings.id },
+      data: { thermalReceiptFooter: DEFAULT_WARRANTY_TERMS },
     });
   }
 

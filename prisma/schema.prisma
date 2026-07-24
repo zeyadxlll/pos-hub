@@ -308,6 +308,7 @@ model SaleItem {
   saleId       String
   productId    String
   serialNumber String?
+  customSpecs  String?
   unitPrice    Float
   unitCost     Float
   quantity     Int

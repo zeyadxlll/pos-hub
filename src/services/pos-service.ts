@@ -55,6 +55,7 @@ export class POSService {
             productCode: product.code,
             productName: product.name,
             serialNumber: item.serialNumber || product.serialNumber,
+            customSpecs: item.customSpecs || null,
             unitPrice,
             unitCost,
             quantity: item.quantity,
@@ -129,6 +130,7 @@ export class POSService {
               create: processedItems.map((pi) => ({
                 productId: pi.productId,
                 serialNumber: pi.serialNumber || null,
+                customSpecs: pi.customSpecs || null,
                 unitPrice: pi.unitPrice,
                 unitCost: pi.unitCost,
                 quantity: pi.quantity,
