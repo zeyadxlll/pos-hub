@@ -24,6 +24,9 @@ import {
   Percent,
   DollarSign,
   Eye,
+  User,
+  Pencil,
+  Sparkles,
 } from "lucide-react";
 
 export default function POSTerminalPage() {
@@ -33,7 +36,10 @@ export default function POSTerminalPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<any[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<string>("");
+
+  // Customer Information
+  const [customerName, setCustomerName] = useState<string>("");
+  const [customerPhone, setCustomerPhone] = useState<string>("");
   const [salespersonName, setSalespersonName] = useState<string>("");
 
   // Payment & Discount State
@@ -46,6 +52,9 @@ export default function POSTerminalPage() {
   const [submitting, setSubmitting] = useState(false);
   const [receiptModal, setReceiptModal] = useState<any | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Edit Item Specs / Custom Price Modal
+  const [editItemModal, setEditItemModal] = useState<any | null>(null);
 
   // Archive & Search Past Sales State
   const [archiveModalOpen, setArchiveModalOpen] = useState(false);
@@ -119,6 +128,7 @@ export default function POSTerminalPage() {
           maxStock: product.quantity,
           serialNumber: product.serialNumber || "",
           specs: `${product.cpu || ""} | ${product.ram || ""} | ${product.ssd || ""}`,
+          customSpecs: "",
         },
       ];
     });
@@ -142,11 +152,28 @@ export default function POSTerminalPage() {
     );
   };
 
+  const handleUpdateItemDetails = (productId: string, updatedPrice: number, updatedSpecs: string, updatedSerial: string) => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.productId === productId) {
+          return {
+            ...item,
+            unitPrice: Number(updatedPrice),
+            customSpecs: updatedSpecs,
+            serialNumber: updatedSerial,
+          };
+        }
+        return item;
+      })
+    );
+    setEditItemModal(null);
+  };
+
   const removeFromCart = (productId: string) => {
     setCart((prev) => prev.filter((item) => item.productId !== productId));
   };
 
-  // Financial Calculations (Fixed vs Percentage Discount)
+  // Financial Calculations
   const grossSubtotal = cart.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
 
   const calculatedDiscountAmount =
@@ -168,7 +195,8 @@ export default function POSTerminalPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerId: selectedCustomer || undefined,
+          customerName: customerName.trim() || undefined,
+          customerPhone: customerPhone.trim() || undefined,
           salespersonName: salespersonName || session?.user?.name || "الكاشير",
           paymentMethod,
           paidAmount: currentPaid,
@@ -180,6 +208,7 @@ export default function POSTerminalPage() {
             unitPrice: i.unitPrice,
             unitCost: i.unitCost,
             serialNumber: i.serialNumber || undefined,
+            customSpecs: i.customSpecs || undefined,
           })),
         }),
       });
@@ -191,6 +220,8 @@ export default function POSTerminalPage() {
       setCart([]);
       setPaidAmount(0);
       setDiscountInput(0);
+      setCustomerName("");
+      setCustomerPhone("");
       fetchProducts();
     } catch (err: any) {
       setErrorMsg(err.message);
@@ -297,7 +328,7 @@ export default function POSTerminalPage() {
           </div>
         </div>
 
-        {/* Right Side: POS Cart & Salesperson / Discount Panel */}
+        {/* Right Side: POS Cart, Customer Details & Salesperson Panel */}
         <div className="w-full md:w-96 glass-panel rounded-2xl border border-border/50 p-5 flex flex-col justify-between overflow-hidden shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-border/40">
@@ -308,19 +339,51 @@ export default function POSTerminalPage() {
             <span className="text-xs font-semibold text-muted-foreground">{cart.length} أصناف</span>
           </div>
 
-          {/* Sales Representative Name Input */}
-          <div className="my-2 p-2.5 rounded-xl bg-secondary/40 border border-border/40 space-y-1">
-            <label className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-              <UserCheck className="w-3.5 h-3.5 text-blue-500" />
-              <span>اسم البائع / السيلز المسؤول:</span>
-            </label>
-            <input
-              type="text"
-              placeholder="مثال: محمود السيد"
-              value={salespersonName}
-              onChange={(e) => setSalespersonName(e.target.value)}
-              className="w-full p-2 rounded-lg bg-background border border-border text-xs text-foreground font-semibold text-right"
-            />
+          {/* Customer & Sales Representative Details */}
+          <div className="my-2 p-3 rounded-xl bg-secondary/40 border border-border/40 space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
+                  <User className="w-3 h-3 text-blue-400" />
+                  <span>اسم العميل</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="مثال: أحمد علي"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full mt-0.5 p-1.5 rounded-lg bg-background border border-border text-xs text-foreground text-right"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-emerald-400" />
+                  <span>رقم الهاتف</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="01012345678"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="w-full mt-0.5 p-1.5 rounded-lg bg-background border border-border text-xs text-foreground font-mono text-right"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
+                <UserCheck className="w-3 h-3 text-purple-400" />
+                <span>اسم السيلز المسؤول:</span>
+              </label>
+              <input
+                type="text"
+                placeholder="مثال: محمود السيد"
+                value={salespersonName}
+                onChange={(e) => setSalespersonName(e.target.value)}
+                className="w-full mt-0.5 p-1.5 rounded-lg bg-background border border-border text-xs text-foreground font-semibold text-right"
+              />
+            </div>
           </div>
 
           {/* Cart Item List */}
@@ -337,14 +400,27 @@ export default function POSTerminalPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-xs font-bold text-foreground line-clamp-1">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.code}</p>
+                      {item.customSpecs ? (
+                        <p className="text-[10px] text-amber-400 font-semibold">{item.customSpecs}</p>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground">{item.specs}</p>
+                      )}
                     </div>
-                    <button
-                      onClick={() => removeFromCart(item.productId)}
-                      className="text-rose-400 hover:text-rose-500 p-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditItemModal(item)}
+                        className="text-blue-400 hover:bg-blue-500/10 p-1 rounded-md transition-colors"
+                        title="تعديل مواصفات ورامات وسعر الجهاز للعميل"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => removeFromCart(item.productId)}
+                        className="text-rose-400 hover:bg-rose-500/10 p-1 rounded-md transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -491,12 +567,88 @@ export default function POSTerminalPage() {
         </div>
       </div>
 
-      {/* Printable Professional Invoice Modal */}
+      {/* Edit Item Specs / Custom Price Modal */}
+      {editItemModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass-panel w-full max-w-md rounded-2xl p-6 border border-border/50 space-y-4 shadow-2xl bg-card text-card-foreground">
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <h3 className="font-bold text-base text-foreground font-heading flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                <span>تعديل مواصفات وسعر الجهاز حسب طلب العميل</span>
+              </h3>
+              <button onClick={() => setEditItemModal(null)} className="text-muted-foreground hover:text-foreground">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold">اسم الجهاز الأصلي</label>
+                <input
+                  type="text"
+                  disabled
+                  value={editItemModal.name}
+                  className="w-full mt-1 p-2 rounded-xl bg-secondary/40 border border-border text-xs text-muted-foreground font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-blue-400">سعر البيع المخصص لهذا العميل (EGP)</label>
+                <input
+                  type="number"
+                  value={editItemModal.unitPrice}
+                  onChange={(e) => setEditItemModal({ ...editItemModal, unitPrice: Number(e.target.value) })}
+                  className="w-full mt-1 p-2 rounded-xl bg-background border border-border text-xs font-extrabold text-foreground text-right"
+                />
+                <p className="text-[10px] text-muted-foreground mt-0.5">يمكنك تغيير السعر في حال ترقية الهارد أو الرامات للعميل</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-amber-400">تعديل المواصفات (مثال: ترقية 1TB SSD & 32GB RAM)</label>
+                <input
+                  type="text"
+                  placeholder="مثال: تم الترقية إلى 1TB SSD بدلاً من 512GB"
+                  value={editItemModal.customSpecs}
+                  onChange={(e) => setEditItemModal({ ...editItemModal, customSpecs: e.target.value })}
+                  className="w-full mt-1 p-2 rounded-xl bg-background border border-border text-xs text-foreground text-right"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold">السيريال نمبر المخصص (Serial Number)</label>
+                <input
+                  type="text"
+                  placeholder="S/N: 5CG1234567"
+                  value={editItemModal.serialNumber}
+                  onChange={(e) => setEditItemModal({ ...editItemModal, serialNumber: e.target.value })}
+                  className="w-full mt-1 p-2 rounded-xl bg-background border border-border text-xs text-foreground font-mono text-right"
+                />
+              </div>
+
+              <button
+                onClick={() =>
+                  handleUpdateItemDetails(
+                    editItemModal.productId,
+                    editItemModal.unitPrice,
+                    editItemModal.customSpecs,
+                    editItemModal.serialNumber
+                  )
+                }
+                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all mt-2"
+              >
+                تأكيد وحفظ التعديلات في السلة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ultra-Professional Printable Thermal & A4 Invoice Modal */}
       {receiptModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <div className="glass-panel w-full max-w-lg rounded-2xl p-6 border border-border/50 space-y-5 shadow-2xl bg-card text-card-foreground my-8">
             <div className="flex items-center justify-between border-b border-border/40 pb-3">
-              <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">فاتورة بيع رسمية</span>
+              <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">فاتورة بيع رسمية ومعتمدة</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
@@ -511,62 +663,88 @@ export default function POSTerminalPage() {
               </div>
             </div>
 
-            {/* Printable Invoice Container */}
-            <div id="printable-invoice" className="p-5 rounded-2xl bg-white text-slate-900 font-sans space-y-4 text-xs shadow-md border border-slate-200">
-              {/* Header: Company Name & Phone */}
-              <div className="text-center border-b border-slate-200 pb-3 space-y-1">
-                <h2 className="text-lg font-black tracking-tight text-slate-950 font-heading">
+            {/* Printable Professional Invoice Container */}
+            <div id="printable-invoice" className="p-6 rounded-2xl bg-white text-slate-900 font-sans space-y-5 text-xs shadow-md border border-slate-200">
+              {/* Top Store Header with Store Logo */}
+              <div className="text-center border-b border-slate-200 pb-4 space-y-2">
+                {receiptModal.sale?.tenant?.settings?.logo || receiptModal.sale?.tenant?.logo ? (
+                  <img
+                    src={receiptModal.sale?.tenant?.settings?.logo || receiptModal.sale?.tenant?.logo}
+                    alt="Logo"
+                    className="w-16 h-16 rounded-xl mx-auto object-cover border border-slate-200 shadow-sm"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-md">
+                    POS
+                  </div>
+                )}
+
+                <h2 className="text-xl font-black tracking-tight text-slate-950 font-heading">
                   {receiptModal.sale?.tenant?.name || "TechZone Laptops & Electronics"}
                 </h2>
-                <div className="flex items-center justify-center gap-3 text-[11px] text-slate-600 font-medium">
+                <div className="flex items-center justify-center gap-4 text-[11px] text-slate-600 font-medium">
                   <span className="flex items-center gap-1">
-                    <Phone className="w-3 h-3 text-blue-600" />
-                    <span>رقم التواصل بالفرع: {receiptModal.sale?.tenant?.phone || "+20 100 123 4567"}</span>
+                    <Phone className="w-3.5 h-3.5 text-blue-600" />
+                    <span>رقم التواصل: {receiptModal.sale?.tenant?.phone || "+20 100 123 4567"}</span>
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500">{receiptModal.sale?.tenant?.address || "القاهرة - مصر"}</p>
+                <p className="text-[10px] text-slate-500 font-medium">{receiptModal.sale?.tenant?.address || "القاهرة - مصر"}</p>
               </div>
 
-              {/* Metadata: Invoice Number, Date, Salesperson */}
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-[11px]">
+              {/* Customer & Invoice Metadata Box */}
+              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-[11px]">
                 <div>
-                  <span className="text-slate-500 font-medium">رقم الفاتورة:</span>{" "}
-                  <span className="font-bold text-blue-600 font-mono">{receiptModal.sale?.invoiceNumber}</span>
+                  <span className="text-slate-500 font-medium block text-[10px]">رقم الفاتورة:</span>
+                  <span className="font-extrabold text-blue-700 font-mono text-xs">{receiptModal.sale?.invoiceNumber}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 font-medium">التاريخ:</span>{" "}
-                  <span className="font-semibold text-slate-800">{formatDate(receiptModal.sale?.createdAt)}</span>
+                  <span className="text-slate-500 font-medium block text-[10px]">تاريخ ووقت الفاتورة:</span>
+                  <span className="font-bold text-slate-800">{formatDate(receiptModal.sale?.createdAt)}</span>
                 </div>
-                <div className="col-span-2 flex items-center gap-1 pt-1 border-t border-slate-200/60 mt-1">
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="text-slate-500 font-medium">مباع بواسطة (السيلز):</span>{" "}
-                  <span className="font-bold text-slate-900">
-                    {receiptModal.sale?.salespersonName || receiptModal.sale?.createdByUser?.name || "السيلز المسؤول"}
-                  </span>
+
+                <div className="col-span-2 pt-2 border-t border-slate-200/80 grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-slate-500 font-medium block text-[10px]">بيانات العميل:</span>
+                    <span className="font-bold text-slate-900 block">{receiptModal.sale?.customer?.name || "عميل كاش مباشر"}</span>
+                    {receiptModal.sale?.customer?.phone && (
+                      <span className="text-[10px] font-mono text-slate-600 block">{receiptModal.sale?.customer?.phone}</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-medium block text-[10px]">السيلز المسؤول:</span>
+                    <span className="font-bold text-emerald-700 block">
+                      {receiptModal.sale?.salespersonName || receiptModal.sale?.createdByUser?.name || "الكاشير"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Items Table */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
+              {/* Items Table with Customized Specs */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                 <table className="w-full text-right text-[11px]">
                   <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                     <tr>
-                      <th className="p-2">الجهاز والبيان</th>
-                      <th className="p-2 text-center">الكمية</th>
-                      <th className="p-2 text-left">السعر</th>
+                      <th className="p-2.5">اسم اللاب توب والمواصفات المخصصة</th>
+                      <th className="p-2.5 text-center">الكمية</th>
+                      <th className="p-2.5 text-left">السعر الإجمالي</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {receiptModal.sale?.items?.map((item: any) => (
                       <tr key={item.id}>
-                        <td className="p-2">
-                          <p className="font-bold text-slate-900">{item.product?.name}</p>
+                        <td className="p-2.5">
+                          <p className="font-extrabold text-slate-900">{item.product?.name}</p>
+                          {item.customSpecs && (
+                            <p className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded w-fit my-0.5">
+                              ✨ {item.customSpecs}
+                            </p>
+                          )}
                           {item.serialNumber && (
                             <p className="text-[10px] text-slate-500 font-mono">S/N: {item.serialNumber}</p>
                           )}
                         </td>
-                        <td className="p-2 text-center font-bold">{item.quantity}</td>
-                        <td className="p-2 text-left font-extrabold text-slate-900">{formatCurrency(item.subtotal)}</td>
+                        <td className="p-2.5 text-center font-bold">{item.quantity}</td>
+                        <td className="p-2.5 text-left font-black text-slate-900">{formatCurrency(item.subtotal)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -574,7 +752,7 @@ export default function POSTerminalPage() {
               </div>
 
               {/* Net Totals & Discount Breakdown */}
-              <div className="bg-slate-950 text-white p-3.5 rounded-xl space-y-1.5">
+              <div className="bg-slate-950 text-white p-4 rounded-xl space-y-1.5">
                 {receiptModal.sale?.discountAmount > 0 && (
                   <>
                     <div className="flex justify-between text-slate-300 text-[11px]">
@@ -590,7 +768,7 @@ export default function POSTerminalPage() {
                 )}
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-xs">صافي الفاتورة المطلوب سداده:</span>
-                  <span className="text-base font-black text-emerald-400 font-heading">
+                  <span className="text-lg font-black text-emerald-400 font-heading">
                     {formatCurrency(receiptModal.sale?.netAmount)}
                   </span>
                 </div>

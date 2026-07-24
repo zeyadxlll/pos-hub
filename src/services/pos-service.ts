@@ -96,11 +96,23 @@ export class POSService {
 
         const invoiceNumber = generateInvoiceNumber("INV");
 
+        let targetCustomerId = input.customerId || null;
+        if (!targetCustomerId && (input.customerName || input.customerPhone)) {
+          const newCust = await tx.customer.create({
+            data: {
+              tenantId,
+              name: input.customerName || "عميل كاش",
+              phone: input.customerPhone || "01000000000",
+            },
+          });
+          targetCustomerId = newCust.id;
+        }
+
         const sale = await tx.sale.create({
           data: {
             tenantId,
             invoiceNumber,
-            customerId: input.customerId || null,
+            customerId: targetCustomerId,
             totalAmount: grossSubtotal,
             discountAmount: discount,
             taxAmount: tax,
@@ -112,6 +124,7 @@ export class POSService {
             paymentStatus: remainingAmount === 0 ? "APPROVED" : "PENDING",
             cashRegisterId: cashRegister.id,
             createdByUserId: userId,
+            salespersonName: input.salespersonName || undefined,
             items: {
               create: processedItems.map((pi) => ({
                 productId: pi.productId,
@@ -128,7 +141,7 @@ export class POSService {
             items: { include: { product: true } },
             customer: true,
             createdByUser: true,
-            tenant: true,
+            tenant: { include: { settings: true } },
           },
         });
 

@@ -42,6 +42,8 @@ export const ProductSchema = z.object({
 
 export const SaleCheckoutSchema = z.object({
   customerId: z.string().optional(),
+  customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
   salespersonName: z.string().optional(),
   paymentMethod: z.enum(["CASH", "INSTAPAY", "VODAFONE_CASH", "CARD", "PARTIAL"]),
   paidAmount: z.coerce.number().min(0, "Paid amount required"),
@@ -54,6 +56,8 @@ export const SaleCheckoutSchema = z.object({
       unitPrice: z.number().min(0),
       unitCost: z.number().min(0),
       serialNumber: z.string().optional(),
+      customName: z.string().optional(),
+      customSpecs: z.string().optional(),
     })
   ).min(1, "At least one product required"),
 });

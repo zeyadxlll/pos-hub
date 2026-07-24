@@ -183,6 +183,22 @@ export default function ProductsPage() {
     }
   };
 
+  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("حجم صورة الجهاز كبير جداً. يرجى اختيار صورة أقل من 5 ميجابايت.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prev) => ({ ...prev, imageUrl: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -194,7 +210,7 @@ export default function ProductsPage() {
               <span>{t("laptopInventory")}</span>
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              إدارة أجهزة اللاب توب، رفع الصور، تزويد الكميات، وضبط مواصفات العتاد (CPU, RAM, SSD, GPU).
+              إدارة أجهزة اللاب توب، رفع الصور (ملف أو رابط)، تزويد الكميات، وضبط مواصفات العتاد (CPU, RAM, SSD, GPU).
             </p>
           </div>
 
@@ -390,11 +406,11 @@ export default function ProductsPage() {
             )}
 
             <form onSubmit={handleSaveProduct} className="space-y-4">
-              {/* Image Preview & URL Field */}
-              <div className="p-3 rounded-xl bg-secondary/30 border border-border/40 space-y-2">
+              {/* Dual Image Input: File Upload OR URL */}
+              <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/40 space-y-3">
                 <label className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
                   <ImageIcon className="w-4 h-4 text-blue-500" />
-                  <span>رفع ورابط صورة الجهاز (Laptop Image URL)</span>
+                  <span>صورة الجهاز (اختيار ملف صورة من جهازك أو كتابة رابط)</span>
                 </label>
 
                 <div className="flex gap-3 items-center">
@@ -402,7 +418,7 @@ export default function ProductsPage() {
                     <img
                       src={formData.imageUrl}
                       alt="Preview"
-                      className="w-16 h-16 rounded-xl object-cover border border-border/60 shrink-0"
+                      className="w-16 h-16 rounded-xl object-cover border border-border/60 shrink-0 shadow-sm"
                     />
                   ) : (
                     <div className="w-16 h-16 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground border border-border/40 shrink-0">
@@ -410,16 +426,27 @@ export default function ProductsPage() {
                     </div>
                   )}
 
-                  <div className="flex-1 space-y-1">
-                    <input
-                      type="text"
-                      placeholder="https://images.unsplash.com/photo-1517336714731.jpg"
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-background border border-border text-xs text-foreground"
-                      dir="ltr"
-                    />
-                    <p className="text-[10px] text-muted-foreground">ضع رابط صورة الجهاز مباشرة لعرضها بالكاشير والمخزن</p>
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <span className="text-[11px] font-semibold text-muted-foreground">رفع صورة مباشرة من الكمبيوتر / الموبايل:</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageFileSelect}
+                        className="w-full text-xs text-muted-foreground file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer mt-0.5"
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="أو ضع رابط صورة مباشرة https://..."
+                        value={formData.imageUrl}
+                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                        className="w-full p-2 rounded-xl bg-background border border-border text-xs text-foreground"
+                        dir="ltr"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

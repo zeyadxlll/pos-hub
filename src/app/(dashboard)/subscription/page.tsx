@@ -5,13 +5,20 @@ import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { useLanguage } from "@/context/language-context";
 import { formatCurrency } from "@/lib/utils";
-import { CreditCard, Key, Smartphone, CheckCircle2 } from "lucide-react";
+import { CreditCard, Key, Smartphone, CheckCircle2, MessageSquare, PhoneCall } from "lucide-react";
 
 export default function SubscriptionPage() {
   const router = useRouter();
   const { t } = useLanguage();
   const [subStatus, setSubStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Settings State
+  const [platformSettings, setPlatformSettings] = useState({
+    transferNumber: "01001234567",
+    whatsappNumber: "01001234567",
+    instructionNote: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
+  });
 
   const [licenseKey, setLicenseKey] = useState("");
   const [keyLoading, setKeyLoading] = useState(false);
@@ -25,6 +32,7 @@ export default function SubscriptionPage() {
 
   useEffect(() => {
     fetchSubStatus();
+    fetchPlatformSettings();
   }, []);
 
   const fetchSubStatus = async () => {
@@ -38,6 +46,18 @@ export default function SubscriptionPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPlatformSettings = async () => {
+    try {
+      const res = await fetch("/api/admin/settings");
+      if (res.ok) {
+        const data = await res.json();
+        setPlatformSettings(data);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -91,7 +111,7 @@ export default function SubscriptionPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل تقديم طلب الدفع");
 
-      setPaymentMsg("تم إرسال إشعار التحويل المالي بنجاح! وجاري مراجعته وتفعيله من الأدمن.");
+      setPaymentMsg("تم إرسال إشعار التحويل بنجاح! يرجى إرسال الصورة أيضاً على رقم الواتساب لسرعة التفعيل.");
       setReceiptImage("");
       fetchSubStatus();
     } catch (err: any) {
@@ -100,6 +120,8 @@ export default function SubscriptionPage() {
       setPaymentLoading(false);
     }
   };
+
+  const whatsappLink = `https://wa.me/2${platformSettings.whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent("مرحباً، قمت بتحويل مبلغ الاشتراك لمنظومة POS Hub ويرجى تفعيل حساب الشركة.")}`;
 
   return (
     <DashboardLayout>
@@ -163,7 +185,7 @@ export default function SubscriptionPage() {
                 <input
                   type="text"
                   required
-                  placeholder="مثال: LAPTOPHUB-YEARLY-KEY-2026-Y1"
+                  placeholder="مثال: POSHUB-YEARLY-KEY-2026-Y1"
                   value={licenseKey}
                   onChange={(e) => setLicenseKey(e.target.value)}
                   className="w-full p-2.5 rounded-xl bg-secondary/40 border border-border text-xs text-foreground font-mono uppercase text-center"
@@ -184,20 +206,35 @@ export default function SubscriptionPage() {
           <div className="glass-panel p-6 rounded-2xl border border-border/50 space-y-4">
             <div className="flex items-center gap-2">
               <Smartphone className="w-5 h-5 text-emerald-400" />
-              <h3 className="font-bold text-base text-foreground font-heading">التحويل المالي المباشر (مصر)</h3>
+              <h3 className="font-bold text-base text-foreground font-heading">التحويل المالي المباشر</h3>
             </div>
 
             {/* Numbers Banner */}
-            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1">
-              <p className="font-bold text-emerald-400">أرقام التحويل الرسمية للمنصة:</p>
-              <div className="flex justify-between text-foreground font-mono">
-                <span>عنوان / رقم انستاباي (Instapay):</span>
-                <span className="font-extrabold text-blue-400">01001234567</span>
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-2">
+              <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                <PhoneCall className="w-4 h-4 text-emerald-500" />
+                <span>أرقام التحويل الرسمية والدعم:</span>
+              </p>
+              <div className="flex justify-between items-center text-foreground font-mono bg-background/50 p-2 rounded-lg border border-border/40">
+                <span>رقم محفظة التحويل (انستاباي / فودافون كاش):</span>
+                <span className="font-extrabold text-emerald-400 text-sm">{platformSettings.transferNumber}</span>
               </div>
-              <div className="flex justify-between text-foreground font-mono">
-                <span>محفظة فودافون كاش:</span>
-                <span className="font-extrabold text-rose-400">01099887766</span>
+              <div className="flex justify-between items-center text-foreground font-mono bg-background/50 p-2 rounded-lg border border-border/40">
+                <span>رقم التواصل والدعم عبر الواتساب:</span>
+                <span className="font-extrabold text-blue-400 text-sm">{platformSettings.whatsappNumber}</span>
               </div>
+              <p className="text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                📌 <span className="font-semibold text-foreground">{platformSettings.instructionNote}</span>
+              </p>
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>إرسال إشعار التحويل عبر الواتساب فوراً</span>
+              </a>
             </div>
 
             {paymentMsg && (
