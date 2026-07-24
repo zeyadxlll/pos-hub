@@ -20,8 +20,9 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const cleanEmail = email.trim().toLowerCase();
       const res = await signIn("credentials", {
-        email,
+        email: cleanEmail,
         password,
         redirect: false,
       });
@@ -30,7 +31,11 @@ export default function LoginPage() {
         setError("بيانات الدخول غير صحيحة أو تم إيقاف الاشتراك.");
         setLoading(false);
       } else {
-        router.push("/dashboard");
+        if (cleanEmail === "zeyadadel132123@gmail.com") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
         router.refresh();
       }
     } catch (err: any) {
