@@ -137,30 +137,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Credentials Assistant */}
-          <div className="mt-6 pt-6 border-t border-border/40 space-y-2">
-            <p className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>تسجيل دخول تجريبي سريع:</span>
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("owner@techzone.com", "password123")}
-                className="px-2.5 py-1.5 rounded-lg bg-secondary/60 text-[11px] font-medium text-foreground hover:bg-secondary border border-border/50 truncate text-right"
-              >
-                🏢 صاحب المحل (TechZone)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("zeyadadel132123@gmail.com", "201018")}
-                className="px-2.5 py-1.5 rounded-lg bg-secondary/60 text-[11px] font-medium text-foreground hover:bg-secondary border border-border/50 truncate text-right"
-              >
-                👑 أدمن المنصة (Zeyad Adel)
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer Link */}

@@ -59,16 +59,19 @@ async function main() {
   console.log("✅ Owner User created:", ownerUser.email);
 
   // 4. Subscription for Demo Tenant
-  await prisma.subscription.create({
-    data: {
-      tenantId: demoTenant.id,
-      planType: "YEARLY",
-      status: "ACTIVE",
-      priceAmount: 5000.0,
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    },
-  });
+  const existingSub = await prisma.subscription.findFirst({ where: { tenantId: demoTenant.id } });
+  if (!existingSub) {
+    await prisma.subscription.create({
+      data: {
+        tenantId: demoTenant.id,
+        planType: "YEARLY",
+        status: "ACTIVE",
+        priceAmount: 5000.0,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      },
+    });
+  }
 
   // 5. Settings & Cash Register
   await prisma.companySettings.upsert({
@@ -86,49 +89,91 @@ async function main() {
     },
   });
 
-  await prisma.cashRegister.create({
-    data: {
-      tenantId: demoTenant.id,
-      name: "Main Safe (الخزينة الرئيسية)",
-      balance: 150000.0,
-      isDefault: true,
-    },
+  const existingRegister = await prisma.cashRegister.findFirst({ where: { tenantId: demoTenant.id } });
+  if (!existingRegister) {
+    await prisma.cashRegister.create({
+      data: {
+        tenantId: demoTenant.id,
+        name: "Main Safe (الخزينة الرئيسية)",
+        balance: 150000.0,
+        isDefault: true,
+      },
+    });
+  }
+
+  // 6. Categories & Brands (Idempotent Upserts)
+  const appleBrand = await prisma.brand.upsert({
+    where: { tenantId_name: { tenantId: demoTenant.id, name: "Apple" } },
+    update: {},
+    create: { tenantId: demoTenant.id, name: "Apple" },
   });
 
-  // 6. Categories & Brands
-  const appleBrand = await prisma.brand.create({ data: { tenantId: demoTenant.id, name: "Apple" } });
-  const hpBrand = await prisma.brand.create({ data: { tenantId: demoTenant.id, name: "HP" } });
-  const dellBrand = await prisma.brand.create({ data: { tenantId: demoTenant.id, name: "Dell" } });
-  const lenovoBrand = await prisma.brand.create({ data: { tenantId: demoTenant.id, name: "Lenovo" } });
+  const hpBrand = await prisma.brand.upsert({
+    where: { tenantId_name: { tenantId: demoTenant.id, name: "HP" } },
+    update: {},
+    create: { tenantId: demoTenant.id, name: "HP" },
+  });
 
-  const gamingCategory = await prisma.category.create({ data: { tenantId: demoTenant.id, name: "Gaming Laptops" } });
-  const ultrabookCategory = await prisma.category.create({ data: { tenantId: demoTenant.id, name: "Ultrabooks" } });
-  const workstationCategory = await prisma.category.create({ data: { tenantId: demoTenant.id, name: "Workstations" } });
+  const dellBrand = await prisma.brand.upsert({
+    where: { tenantId_name: { tenantId: demoTenant.id, name: "Dell" } },
+    update: {},
+    create: { tenantId: demoTenant.id, name: "Dell" },
+  });
+
+  const lenovoBrand = await prisma.brand.upsert({
+    where: { tenantId_name: { tenantId: demoTenant.id, name: "Lenovo" } },
+    update: {},
+    create: { tenantId: demoTenant.id, name: "Lenovo" },
+  });
+
+  const gamingCategory = await prisma.category.upsert({
+    where: { tenantId_name: { tenantId: demoTenant.id, name: "Gaming Laptops" } },
+    update: {},
+    create: { tenantId: demoTenant.id, name: "Gaming Laptops" },
+  });
+
+  const ultrabookCategory = await prisma.category.upsert({
+    where: { tenantId_name: { tenantId: demoTenant.id, name: "Ultrabooks" } },
+    update: {},
+    create: { tenantId: demoTenant.id, name: "Ultrabooks" },
+  });
+
+  const workstationCategory = await prisma.category.upsert({
+    where: { tenantId_name: { tenantId: demoTenant.id, name: "Workstations" } },
+    update: {},
+    create: { tenantId: demoTenant.id, name: "Workstations" },
+  });
 
   // 7. Supplier & Customer
-  const supplier = await prisma.supplier.create({
-    data: {
-      tenantId: demoTenant.id,
-      name: "El-Badr International Import",
-      phone: "+201223344556",
-      email: "badr@import-laptops.com",
-      address: "Free Zone, Nasr City, Cairo",
-      notes: "Primary importer for US used laptops",
-      balance: 0.0,
-    },
-  });
+  let supplier = await prisma.supplier.findFirst({ where: { tenantId: demoTenant.id } });
+  if (!supplier) {
+    supplier = await prisma.supplier.create({
+      data: {
+        tenantId: demoTenant.id,
+        name: "El-Badr International Import",
+        phone: "+201223344556",
+        email: "badr@import-laptops.com",
+        address: "Free Zone, Nasr City, Cairo",
+        notes: "Primary importer for US used laptops",
+        balance: 0.0,
+      },
+    });
+  }
 
-  await prisma.customer.create({
-    data: {
-      tenantId: demoTenant.id,
-      name: "Eng. Ahmed Hassan",
-      phone: "+201099887766",
-      email: "ahmed.hassan@example.com",
-      address: "Maadi, Cairo",
-      notes: "VIP Client - Software Developer",
-      balance: 0.0,
-    },
-  });
+  let customer = await prisma.customer.findFirst({ where: { tenantId: demoTenant.id } });
+  if (!customer) {
+    customer = await prisma.customer.create({
+      data: {
+        tenantId: demoTenant.id,
+        name: "Eng. Ahmed Hassan",
+        phone: "+201099887766",
+        email: "ahmed.hassan@example.com",
+        address: "Maadi, Cairo",
+        notes: "VIP Client - Software Developer",
+        balance: 0.0,
+      },
+    });
+  }
 
   // 8. Sample Laptop Products with Specs & Serials
   const productsData = [
@@ -215,24 +260,18 @@ async function main() {
   ];
 
   for (const p of productsData) {
-    const product = await prisma.product.create({
-      data: {
-        tenantId: demoTenant.id,
-        ...p,
-      },
+    const existingP = await prisma.product.findUnique({
+      where: { tenantId_code: { tenantId: demoTenant.id, code: p.code } },
     });
 
-    await prisma.stockMovement.create({
-      data: {
-        tenantId: demoTenant.id,
-        productId: product.id,
-        type: "PURCHASE",
-        quantityDelta: product.quantity,
-        previousQty: 0,
-        newQty: product.quantity,
-        reason: "Initial Stock Import",
-      },
-    });
+    if (!existingP) {
+      await prisma.product.create({
+        data: {
+          tenantId: demoTenant.id,
+          ...p,
+        },
+      });
+    }
   }
   console.log("✅ Laptop Products & Initial Stock Movements Created.");
 
@@ -251,15 +290,18 @@ async function main() {
   }
 
   // 10. Sample Expense Categories
-  await prisma.expenseCategory.createMany({
-    data: [
-      { tenantId: demoTenant.id, name: "Shop Rent (إيجار المحل)" },
-      { tenantId: demoTenant.id, name: "Electricity & Utilities (كهرباء ومرافق)" },
-      { tenantId: demoTenant.id, name: "Internet & Comms (إنترنت وتواصل)" },
-      { tenantId: demoTenant.id, name: "Transportation & Freight (نقل وشحن)" },
-      { tenantId: demoTenant.id, name: "Staff Salaries (أجور ومرتبات)" },
-    ],
-  });
+  const existingExpCats = await prisma.expenseCategory.count({ where: { tenantId: demoTenant.id } });
+  if (existingExpCats === 0) {
+    await prisma.expenseCategory.createMany({
+      data: [
+        { tenantId: demoTenant.id, name: "Shop Rent (إيجار المحل)" },
+        { tenantId: demoTenant.id, name: "Electricity & Utilities (كهرباء ومرافق)" },
+        { tenantId: demoTenant.id, name: "Internet & Comms (إنترنت وتواصل)" },
+        { tenantId: demoTenant.id, name: "Transportation & Freight (نقل وشحن)" },
+        { tenantId: demoTenant.id, name: "Staff Salaries (أجور ومرتبات)" },
+      ],
+    });
+  }
 
   console.log("🎉 Seeding completed successfully!");
 }
