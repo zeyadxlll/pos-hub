@@ -4,7 +4,7 @@ import { AuditService } from "./audit-service";
 
 export class FinanceService {
   static async getCashRegister(tenantId: string) {
-    let register = await prisma.cashRegister.findFirst({
+    let register: any = await prisma.cashRegister.findFirst({
       where: { tenantId, isDefault: true },
       include: { cashTransactions: { take: 50, orderBy: { createdAt: "desc" }, include: { createdByUser: true } } },
     });
@@ -12,7 +12,7 @@ export class FinanceService {
     if (!register) {
       register = await prisma.cashRegister.create({
         data: { tenantId, name: "Main Safe (الخزينة الرئيسية)", balance: 0.0, isDefault: true },
-        include: { cashTransactions: true },
+        include: { cashTransactions: { take: 50, orderBy: { createdAt: "desc" }, include: { createdByUser: true } } },
       });
     }
 

@@ -10,7 +10,7 @@ export class PurchaseService {
         const settings = await tx.companySettings.findUnique({ where: { tenantId } });
         const shouldAutoDeduct = input.autoCashDeducted ?? (settings?.autoCashDeduction ?? true);
 
-        let cashRegister = await tx.cashRegister.findFirst({
+        let cashRegister: any = await tx.cashRegister.findFirst({
           where: { tenantId, isDefault: true },
         });
 

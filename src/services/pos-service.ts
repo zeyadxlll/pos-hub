@@ -6,7 +6,7 @@ import { AuditService } from "./audit-service";
 export class POSService {
   static async checkout(tenantId: string, userId: string, input: SaleCheckoutInput) {
     return await prisma.$transaction(
-      async (tx: any) => {
+      async (tx) => {
         let cashRegister = await tx.cashRegister.findFirst({
           where: { tenantId, isDefault: true },
         });
@@ -96,36 +96,34 @@ export class POSService {
 
         const invoiceNumber = generateInvoiceNumber("INV");
 
-        const saleData: any = {
-          tenantId,
-          invoiceNumber,
-          customerId: input.customerId || null,
-          totalAmount: grossSubtotal,
-          discountAmount: discount,
-          taxAmount: tax,
-          netAmount,
-          profitAmount: totalProfit,
-          paymentMethod: input.paymentMethod,
-          paidAmount,
-          remainingAmount,
-          paymentStatus: remainingAmount === 0 ? "APPROVED" : "PENDING",
-          cashRegisterId: cashRegister.id,
-          createdByUserId: userId,
-          items: {
-            create: processedItems.map((pi) => ({
-              productId: pi.productId,
-              serialNumber: pi.serialNumber || null,
-              unitPrice: pi.unitPrice,
-              unitCost: pi.unitCost,
-              quantity: pi.quantity,
-              subtotal: pi.subtotal,
-              profit: pi.profit,
-            })),
-          },
-        };
-
         const sale = await tx.sale.create({
-          data: saleData,
+          data: {
+            tenantId,
+            invoiceNumber,
+            customerId: input.customerId || null,
+            totalAmount: grossSubtotal,
+            discountAmount: discount,
+            taxAmount: tax,
+            netAmount,
+            profitAmount: totalProfit,
+            paymentMethod: input.paymentMethod,
+            paidAmount,
+            remainingAmount,
+            paymentStatus: remainingAmount === 0 ? "APPROVED" : "PENDING",
+            cashRegisterId: cashRegister.id,
+            createdByUserId: userId,
+            items: {
+              create: processedItems.map((pi) => ({
+                productId: pi.productId,
+                serialNumber: pi.serialNumber || null,
+                unitPrice: pi.unitPrice,
+                unitCost: pi.unitCost,
+                quantity: pi.quantity,
+                subtotal: pi.subtotal,
+                profit: pi.profit,
+              })),
+            },
+          },
           include: {
             items: { include: { product: true } },
             customer: true,
@@ -194,12 +192,7 @@ export class POSService {
           details: { invoiceNumber, netAmount, paidAmount, itemCount: processedItems.length },
         });
 
-        const saleWithSalesperson = {
-          ...sale,
-          salespersonName: input.salespersonName || sale.createdByUser?.name || "السيلز المسؤول",
-        };
-
-        return { sale: saleWithSalesperson, invoice };
+        return { sale, invoice };
       },
       { timeout: 20000, maxWait: 10000 }
     );
