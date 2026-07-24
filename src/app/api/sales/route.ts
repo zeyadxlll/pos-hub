@@ -13,7 +13,13 @@ export async function GET(req: Request) {
 
   const sales = await prisma.sale.findMany({
     where: { tenantId: session.user.tenantId },
-    include: { customer: true, createdByUser: true, items: { include: { product: true } }, invoice: true },
+    include: {
+      customer: true,
+      createdByUser: true,
+      items: { include: { product: true } },
+      invoice: true,
+      tenant: { include: { settings: true } },
+    },
     orderBy: { createdAt: "desc" },
     take: 50,
   });

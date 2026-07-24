@@ -674,13 +674,13 @@ export default function POSTerminalPage() {
                     className="w-16 h-16 rounded-xl mx-auto object-cover border border-slate-200 shadow-sm"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-md">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-md font-heading">
                     POS
                   </div>
                 )}
 
                 <h2 className="text-xl font-black tracking-tight text-slate-950 font-heading">
-                  {receiptModal.sale?.tenant?.name || "TechZone Laptops & Electronics"}
+                  {receiptModal.sale?.tenant?.name || session?.user?.tenantName || "متجر اللاب توب والـ POS"}
                 </h2>
                 <div className="flex items-center justify-center gap-4 text-[11px] text-slate-600 font-medium">
                   <span className="flex items-center gap-1">
@@ -707,7 +707,7 @@ export default function POSTerminalPage() {
                     <span className="text-slate-500 font-medium block text-[10px]">بيانات العميل:</span>
                     <span className="font-bold text-slate-900 block">{receiptModal.sale?.customer?.name || "عميل كاش مباشر"}</span>
                     {receiptModal.sale?.customer?.phone && (
-                      <span className="text-[10px] font-mono text-slate-600 block">{receiptModal.sale?.customer?.phone}</span>
+                      <span className="text-[10px] font-mono text-slate-600 block">تليفون: {receiptModal.sale?.customer?.phone}</span>
                     )}
                   </div>
                   <div>
@@ -719,12 +719,12 @@ export default function POSTerminalPage() {
                 </div>
               </div>
 
-              {/* Items Table with Customized Specs */}
+              {/* Items Table with Full Specs & Customized Upgrades */}
               <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                 <table className="w-full text-right text-[11px]">
                   <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                     <tr>
-                      <th className="p-2.5">اسم اللاب توب والمواصفات المخصصة</th>
+                      <th className="p-2.5">اسم اللاب توب والمواصفات المكاملة</th>
                       <th className="p-2.5 text-center">الكمية</th>
                       <th className="p-2.5 text-left">السعر الإجمالي</th>
                     </tr>
@@ -732,19 +732,34 @@ export default function POSTerminalPage() {
                   <tbody className="divide-y divide-slate-100">
                     {receiptModal.sale?.items?.map((item: any) => (
                       <tr key={item.id}>
-                        <td className="p-2.5">
-                          <p className="font-extrabold text-slate-900">{item.product?.name}</p>
-                          {item.customSpecs && (
-                            <p className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded w-fit my-0.5">
-                              ✨ {item.customSpecs}
+                        <td className="p-2.5 space-y-1">
+                          <p className="font-extrabold text-slate-900 text-xs">{item.product?.name}</p>
+
+                          {/* Full Laptop Hardware Specs */}
+                          {(item.product?.cpu || item.product?.ram || item.product?.ssd || item.product?.gpu) && (
+                            <p className="text-[10px] text-slate-600 font-medium">
+                              💻 {[item.product?.cpu, item.product?.ram, item.product?.ssd, item.product?.gpu, item.product?.condition === "NEW" ? "جديد" : item.product?.condition === "USED" ? "مستعمل" : "مجدد"]
+                                .filter(Boolean)
+                                .join(" • ")}
                             </p>
                           )}
-                          {item.serialNumber && (
-                            <p className="text-[10px] text-slate-500 font-mono">S/N: {item.serialNumber}</p>
+
+                          {/* Custom Specs / Upgrade Note */}
+                          {item.customSpecs && (
+                            <p className="text-[10px] text-amber-800 font-bold bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md w-fit">
+                              ⚡ التعديل والترقية بطلب العميل: {item.customSpecs}
+                            </p>
+                          )}
+
+                          {/* Serial Number */}
+                          {(item.serialNumber || item.product?.serialNumber) && (
+                            <p className="text-[10px] text-slate-500 font-mono">
+                              S/N: {item.serialNumber || item.product?.serialNumber}
+                            </p>
                           )}
                         </td>
-                        <td className="p-2.5 text-center font-bold">{item.quantity}</td>
-                        <td className="p-2.5 text-left font-black text-slate-900">{formatCurrency(item.subtotal)}</td>
+                        <td className="p-2.5 text-center font-extrabold text-xs">{item.quantity}</td>
+                        <td className="p-2.5 text-left font-black text-slate-900 text-xs">{formatCurrency(item.subtotal)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -778,22 +793,12 @@ export default function POSTerminalPage() {
               <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-slate-900 space-y-1.5">
                 <p className="font-extrabold text-[11px] text-amber-700 flex items-center gap-1">
                   <ShieldCheck className="w-4 h-4 text-amber-600" />
-                  <span>شروط الضمان الرسمية والاستبدال:</span>
+                  <span>شروط الضمان وسياسة المحل الرسمية:</span>
                 </p>
-                <ul className="space-y-1 text-[10px] font-semibold text-slate-700 leading-relaxed pr-2">
-                  <li className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                    <span>ضمان لمدة <strong>3 شهور</strong> ضد عيوب الصناعة.</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                    <span>استبدال الجهاز فقط خلال <strong>أسبوعين</strong> من تاريخ الفاتورة.</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-                    <span><strong>لا يوجد ترجيع نقدي للجهاز بعد الشراء (استبدال فقط)</strong>.</span>
-                  </li>
-                </ul>
+                <div className="text-[10px] font-semibold text-slate-700 leading-relaxed pr-2 whitespace-pre-line">
+                  {receiptModal.sale?.tenant?.settings?.thermalReceiptFooter ||
+                    "• ضمان لمدة 3 شهور ضد عيوب الصناعة.\n• استبدال الجهاز فقط خلال أسبوعين من تاريخ الفاتورة.\n• لا يوجد ترجيع نقدي للجهاز بعد الشراء (استبدال فقط)."}
+                </div>
               </div>
 
               {/* Footer QR Payload */}
