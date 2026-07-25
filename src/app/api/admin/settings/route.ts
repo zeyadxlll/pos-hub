@@ -5,8 +5,27 @@ import { prisma } from "@/lib/prisma";
 
 const SYSTEM_TENANT_ID = "SYSTEM_PLATFORM_SETTINGS";
 
+async function ensureSystemTenant() {
+  await prisma.tenant.upsert({
+    where: { id: SYSTEM_TENANT_ID },
+    update: {},
+    create: {
+      id: SYSTEM_TENANT_ID,
+      name: "POS Hub Platform Settings",
+      slug: "system-platform-settings",
+      ownerName: "SuperAdmin",
+      phone: "01000000000",
+      email: "system@poshub.internal",
+      address: "Platform System Core",
+      status: "ACTIVE",
+    },
+  });
+}
+
 export async function GET() {
   try {
+    await ensureSystemTenant();
+
     let settings = await prisma.companySettings.findUnique({
       where: { tenantId: SYSTEM_TENANT_ID },
     });
@@ -45,6 +64,7 @@ export async function PUT(req: Request) {
   }
 
   try {
+    await ensureSystemTenant();
     const { transferNumber, whatsappNumber, instructionNote } = await req.json();
 
     const updated = await prisma.companySettings.upsert({
