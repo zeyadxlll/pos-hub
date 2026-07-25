@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { useLanguage } from "@/context/language-context";
 import { formatCurrency } from "@/lib/utils";
-import { CreditCard, Key, Smartphone, CheckCircle2, MessageSquare, PhoneCall } from "lucide-react";
+import { CreditCard, Key, Smartphone, CheckCircle2, MessageSquare, PhoneCall, Sparkles, Tag, AlertCircle } from "lucide-react";
 
 export default function SubscriptionPage() {
   const router = useRouter();
@@ -13,11 +13,14 @@ export default function SubscriptionPage() {
   const [subStatus, setSubStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Settings State
+  // Platform Settings State
   const [platformSettings, setPlatformSettings] = useState({
     transferNumber: "01001234567",
     whatsappNumber: "01001234567",
     instructionNote: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
+    originalPrice: 500,
+    discountPrice: 350,
+    promoBanner: "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
   });
 
   const [licenseKey, setLicenseKey] = useState("");
@@ -54,7 +57,14 @@ export default function SubscriptionPage() {
       const res = await fetch("/api/admin/settings");
       if (res.ok) {
         const data = await res.json();
-        setPlatformSettings(data);
+        setPlatformSettings({
+          transferNumber: data.transferNumber || "01001234567",
+          whatsappNumber: data.whatsappNumber || "01001234567",
+          instructionNote: data.instructionNote || "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
+          originalPrice: Number(data.originalPrice || 500),
+          discountPrice: Number(data.discountPrice || 350),
+          promoBanner: data.promoBanner || "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
+        });
       }
     } catch (err) {
       console.error(err);
@@ -94,7 +104,7 @@ export default function SubscriptionPage() {
     setPaymentLoading(true);
     setPaymentMsg(null);
 
-    const price = paymentPlan === "YEARLY" ? 5000 : 500;
+    const price = paymentPlan === "YEARLY" ? platformSettings.discountPrice * 10 : platformSettings.discountPrice;
 
     try {
       const res = await fetch("/api/subscription/payment-receipt", {
@@ -123,9 +133,53 @@ export default function SubscriptionPage() {
 
   const whatsappLink = `https://wa.me/2${platformSettings.whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent("مرحباً، قمت بتحويل مبلغ الاشتراك لمنظومة POS Hub ويرجى تفعيل حساب الشركة.")}`;
 
+  const savingsAmount = Math.max(0, platformSettings.originalPrice - platformSettings.discountPrice);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Promotional Discount Alert Banner for Non-Subscribed or All Store Owners */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-700 text-white p-5 shadow-2xl border border-white/20">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center md:text-right">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-extrabold border border-white/30">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                <span>عرض ترويجي وخصم خاص على الاشتراك</span>
+              </span>
+              <h2 className="text-xl font-extrabold font-heading tracking-tight mt-1">
+                {platformSettings.promoBanner}
+              </h2>
+              <p className="text-xs text-white/90">
+                جدد أو فعل حسابك الآن واستمتع بالربط السحابي والنسخ الاحتياطي وحماية الأوردرات دون أي توقف!
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 shrink-0">
+              <div className="text-center">
+                <span className="text-[10px] text-white/70 block uppercase font-bold">السعر الاصلي</span>
+                <span className="text-sm font-bold line-through text-white/60 font-mono">
+                  {platformSettings.originalPrice} EGP
+                </span>
+              </div>
+
+              <div className="h-8 w-px bg-white/20" />
+
+              <div className="text-center">
+                <span className="text-[10px] text-amber-300 block uppercase font-extrabold">السعر بعد الخصم</span>
+                <span className="text-xl font-extrabold text-amber-300 font-mono">
+                  {platformSettings.discountPrice} EGP
+                </span>
+              </div>
+
+              {savingsAmount > 0 && (
+                <span className="px-2.5 py-1 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs shadow-lg animate-bounce">
+                  توفير {savingsAmount} ج
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground font-heading flex items-center gap-2">
@@ -156,7 +210,13 @@ export default function SubscriptionPage() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              نوع الخطة: <span className="font-semibold text-foreground">{subStatus?.planType === "YEARLY" ? "خطة سنوية (5,000 EGP / سنة)" : "خطة شهرية (500 EGP / شهر)"}</span>
+              سعر الاشتراك المعتمد:{" "}
+              <span className="font-bold text-emerald-400 font-mono">
+                {platformSettings.discountPrice} EGP / شهر
+              </span>{" "}
+              <span className="line-through text-muted-foreground text-[10px] font-mono">
+                ({platformSettings.originalPrice} EGP)
+              </span>
             </p>
           </div>
         </div>
@@ -250,10 +310,10 @@ export default function SubscriptionPage() {
                   <select
                     value={paymentPlan}
                     onChange={(e: any) => setPaymentPlan(e.target.value)}
-                    className="w-full mt-1 p-2 rounded-xl bg-secondary/40 border border-border text-xs"
+                    className="w-full mt-1 p-2 rounded-xl bg-secondary/40 border border-border text-xs font-bold"
                   >
-                    <option value="MONTHLY">خطة شهرية (500 ج.م)</option>
-                    <option value="YEARLY">خطة سنوية (5,000 ج.م)</option>
+                    <option value="MONTHLY">خطة شهرية ({platformSettings.discountPrice} ج.م)</option>
+                    <option value="YEARLY">خطة سنوية ({platformSettings.discountPrice * 10} ج.م)</option>
                   </select>
                 </div>
                 <div>
@@ -261,7 +321,7 @@ export default function SubscriptionPage() {
                   <select
                     value={paymentMethod}
                     onChange={(e: any) => setPaymentMethod(e.target.value)}
-                    className="w-full mt-1 p-2 rounded-xl bg-secondary/40 border border-border text-xs"
+                    className="w-full mt-1 p-2 rounded-xl bg-secondary/40 border border-border text-xs font-bold"
                   >
                     <option value="INSTAPAY">انستاباي Instapay</option>
                     <option value="VODAFONE_CASH">فودافون كاش</option>

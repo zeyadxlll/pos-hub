@@ -18,6 +18,9 @@ export default function AdminDashboardPage() {
     transferNumber: "01001234567",
     whatsappNumber: "01001234567",
     instructionNote: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
+    originalPrice: 500,
+    discountPrice: 350,
+    promoBanner: "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMsg, setSettingsMsg] = useState<string | null>(null);
@@ -55,7 +58,14 @@ export default function AdminDashboardPage() {
       const res = await fetch("/api/admin/settings");
       if (res.ok) {
         const data = await res.json();
-        setPlatformSettings(data);
+        setPlatformSettings({
+          transferNumber: data.transferNumber || "01001234567",
+          whatsappNumber: data.whatsappNumber || "01001234567",
+          instructionNote: data.instructionNote || "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
+          originalPrice: Number(data.originalPrice || 500),
+          discountPrice: Number(data.discountPrice || 350),
+          promoBanner: data.promoBanner || "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
+        });
       }
     } catch (err) {
       console.error(err);
@@ -74,11 +84,14 @@ export default function AdminDashboardPage() {
         body: JSON.stringify(platformSettings),
       });
 
-      if (!res.ok) throw new Error("فشل حفظ إعدادات التحويل والدعم");
-
-      setSettingsMsg("تم حفظ وتعميم أرقام التحويل والدعم والواتساب بنجاح!");
+      if (res.ok) {
+        setSettingsMsg("تم حفظ أرقام التحويل وأسعار الاشتراك والعروض الترويجية بنجاح!");
+      } else {
+        const d = await res.json();
+        alert(d.error || "فشل الحفظ");
+      }
     } catch (err: any) {
-      setSettingsMsg(err.message);
+      alert(err.message);
     } finally {
       setSettingsSaving(false);
     }
@@ -117,7 +130,7 @@ export default function AdminDashboardPage() {
       const res = await fetch("/api/admin/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planType: keyPlan, durationDays: keyDays }),
+        body: JSON.stringify({ plan: keyPlan, validDays: keyDays }),
       });
       if (res.ok) fetchAdminData();
     } catch (err) {
@@ -126,7 +139,7 @@ export default function AdminDashboardPage() {
   };
 
   const handleDeleteKey = async (keyId: string) => {
-    if (!confirm("هل أنت تأكد من حذف كود الترخيص هذا؟")) return;
+    if (!confirm("هل أنت تأكد من رغبتك في حذف مفتاح الترخيص هذا؟")) return;
     try {
       const res = await fetch(`/api/admin/keys?keyId=${keyId}`, { method: "DELETE" });
       if (res.ok) fetchAdminData();
@@ -145,20 +158,20 @@ export default function AdminDashboardPage() {
             <span>لوحة التحكم الفائقة للمنصة (SuperAdmin)</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            إدارة كافة الشركات والمحلات المسجلة، ضبط أرقام تحويل انستاباي وفودافون كاش والواتساب، وتوليد وحذف تراخيص الاشتراكات.
+            إدارة كافة الشركات والمحلات المسجلة، ضبط أسعار الاشتراك، العروض الترويجية، أرقام تحويل انستاباي، وتوليد وحذف التراخيص.
           </p>
         </div>
 
-        {/* Section 1: Platform Payment Numbers & WhatsApp Settings */}
+        {/* Section 1: Platform Payment Numbers, Prices & Promo Settings */}
         <form onSubmit={handleSaveSettings} className="glass-panel p-6 rounded-2xl border border-border/50 space-y-4">
           <div className="flex items-center justify-between border-b border-border/40 pb-3">
             <div>
               <h3 className="font-bold text-base text-foreground font-heading flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-emerald-400" />
-                <span>إعدادات أرقام التحويلات المالية والدعم عبر الواتساب</span>
+                <span>إعدادات أسعار الاشتراكات والعروض الترويجية وأرقام التحويلات</span>
               </h3>
               <p className="text-xs text-muted-foreground">
-                هذه الأرقام تظهر لجميع أصحاب المحلات في صفحة تفعيل الاشتراك عند التحويل.
+                تحكم في أسعار الاشتراك والتخصيمات والتنبيهات المباشرة التي تظهر للعملاء غير المشتركين.
               </p>
             </div>
 
@@ -168,7 +181,7 @@ export default function AdminDashboardPage() {
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center gap-1.5"
             >
               <Save className="w-4 h-4" />
-              <span>{settingsSaving ? "جاري الحفظ..." : "حفظ الأرقام"}</span>
+              <span>{settingsSaving ? "جاري الحفظ..." : "حفظ الإعدادات والعروض"}</span>
             </button>
           </div>
 
@@ -216,6 +229,40 @@ export default function AdminDashboardPage() {
                 value={platformSettings.instructionNote}
                 onChange={(e) => setPlatformSettings({ ...platformSettings, instructionNote: e.target.value })}
                 className="w-full mt-1.5 p-2.5 rounded-xl bg-secondary/40 border border-border text-xs text-foreground text-right"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">سعر الاشتراك الأساسي (EGP)</label>
+              <input
+                type="number"
+                required
+                value={platformSettings.originalPrice}
+                onChange={(e) => setPlatformSettings({ ...platformSettings, originalPrice: Number(e.target.value) })}
+                className="w-full mt-1.5 p-2.5 rounded-xl bg-secondary/40 border border-border text-xs text-foreground font-mono text-right"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-emerald-400">سعر الاشتراك بعد الخصم والعرض (EGP)</label>
+              <input
+                type="number"
+                required
+                value={platformSettings.discountPrice}
+                onChange={(e) => setPlatformSettings({ ...platformSettings, discountPrice: Number(e.target.value) })}
+                className="w-full mt-1.5 p-2.5 rounded-xl bg-secondary/40 border border-border text-xs font-bold text-emerald-400 font-mono text-right"
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="text-xs font-bold text-amber-400">نص العرض الترويجي والتنبيه التنافسي (يظهر كـ Banner تنبيه للعملاء غير المشتركين)</label>
+              <input
+                type="text"
+                required
+                value={platformSettings.promoBanner}
+                onChange={(e) => setPlatformSettings({ ...platformSettings, promoBanner: e.target.value })}
+                className="w-full mt-1.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-300 text-right"
+                placeholder="مثال: 🔥 عرض خاص لفترة محدودة: خصم 30% على الاشتراك وخصم فوري!"
               />
             </div>
           </div>

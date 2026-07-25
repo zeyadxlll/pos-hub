@@ -30,29 +30,58 @@ export async function GET() {
       where: { tenantId: SYSTEM_TENANT_ID },
     });
 
+    const defaultData = {
+      transferNumber: "01001234567",
+      whatsappNumber: "01001234567",
+      instructionNote: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
+      originalPrice: 500,
+      discountPrice: 350,
+      promoBanner: "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
+    };
+
     if (!settings) {
       settings = await prisma.companySettings.create({
         data: {
           tenantId: SYSTEM_TENANT_ID,
-          companyName: "POS Hub Payment Platform",
+          companyName: JSON.stringify(defaultData),
           currency: "EGP",
-          thermalReceiptHeader: "01001234567", // Transfer Number (Vodafone Cash / Instapay)
-          thermalReceiptFooter: "01001234567", // WhatsApp Support Number
-          logo: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً", // Instruction note
+          thermalReceiptHeader: defaultData.transferNumber,
+          thermalReceiptFooter: defaultData.whatsappNumber,
+          logo: defaultData.instructionNote,
         },
       });
+
+      return NextResponse.json(defaultData);
     }
 
-    return NextResponse.json({
-      transferNumber: settings.thermalReceiptHeader || "01001234567",
-      whatsappNumber: settings.thermalReceiptFooter || "01001234567",
-      instructionNote: settings.logo || "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
-    });
+    try {
+      const parsed = JSON.parse(settings.companyName);
+      return NextResponse.json({
+        transferNumber: parsed.transferNumber || settings.thermalReceiptHeader || defaultData.transferNumber,
+        whatsappNumber: parsed.whatsappNumber || settings.thermalReceiptFooter || defaultData.whatsappNumber,
+        instructionNote: parsed.instructionNote || settings.logo || defaultData.instructionNote,
+        originalPrice: Number(parsed.originalPrice || 500),
+        discountPrice: Number(parsed.discountPrice || 350),
+        promoBanner: parsed.promoBanner || defaultData.promoBanner,
+      });
+    } catch {
+      return NextResponse.json({
+        transferNumber: settings.thermalReceiptHeader || defaultData.transferNumber,
+        whatsappNumber: settings.thermalReceiptFooter || defaultData.whatsappNumber,
+        instructionNote: settings.logo || defaultData.instructionNote,
+        originalPrice: 500,
+        discountPrice: 350,
+        promoBanner: defaultData.promoBanner,
+      });
+    }
   } catch (error: any) {
     return NextResponse.json({
       transferNumber: "01001234567",
       whatsappNumber: "01001234567",
       instructionNote: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
+      originalPrice: 500,
+      discountPrice: 350,
+      promoBanner: "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
     });
   }
 }
@@ -65,30 +94,38 @@ export async function PUT(req: Request) {
 
   try {
     await ensureSystemTenant();
-    const { transferNumber, whatsappNumber, instructionNote } = await req.json();
+    const body = await req.json();
+
+    const payload = {
+      transferNumber: body.transferNumber || "01001234567",
+      whatsappNumber: body.whatsappNumber || "01001234567",
+      instructionNote: body.instructionNote || "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
+      originalPrice: Number(body.originalPrice || 500),
+      discountPrice: Number(body.discountPrice || 350),
+      promoBanner: body.promoBanner || "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج!",
+    };
+
+    const jsonString = JSON.stringify(payload);
 
     const updated = await prisma.companySettings.upsert({
       where: { tenantId: SYSTEM_TENANT_ID },
       update: {
-        thermalReceiptHeader: transferNumber,
-        thermalReceiptFooter: whatsappNumber,
-        logo: instructionNote,
+        companyName: jsonString,
+        thermalReceiptHeader: payload.transferNumber,
+        thermalReceiptFooter: payload.whatsappNumber,
+        logo: payload.instructionNote,
       },
       create: {
         tenantId: SYSTEM_TENANT_ID,
-        companyName: "POS Hub Payment Platform",
+        companyName: jsonString,
         currency: "EGP",
-        thermalReceiptHeader: transferNumber,
-        thermalReceiptFooter: whatsappNumber,
-        logo: instructionNote,
+        thermalReceiptHeader: payload.transferNumber,
+        thermalReceiptFooter: payload.whatsappNumber,
+        logo: payload.instructionNote,
       },
     });
 
-    return NextResponse.json({
-      transferNumber: updated.thermalReceiptHeader,
-      whatsappNumber: updated.thermalReceiptFooter,
-      instructionNote: updated.logo,
-    });
+    return NextResponse.json(payload);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
