@@ -72,6 +72,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: t("posTerminal"), href: "/pos", icon: ShoppingCart },
     { name: t("laptopInventory"), href: "/products", icon: Laptop },
     { name: "تتبع الضمان بالسيريال", href: "/warranty-check", icon: ShieldCheck },
+    { name: "مميزات المنظومة والـ AI", href: "/features", icon: Sparkles },
     { name: t("purchaseOrders"), href: "/purchases", icon: Truck },
     { name: t("financeCash"), href: "/finance", icon: Wallet },
     { name: t("reportsAnalytics"), href: "/reports", icon: BarChart3 },
