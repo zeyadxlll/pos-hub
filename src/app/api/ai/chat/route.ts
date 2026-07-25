@@ -50,6 +50,34 @@ export async function POST(req: Request) {
 
     // AI Intent Recognition & Contextual Intelligence
     if (
+      sanitizedPrompt.includes("بوست") ||
+      sanitizedPrompt.includes("فيسبوك") ||
+      sanitizedPrompt.includes("تسويق") ||
+      sanitizedPrompt.includes("اعلان")
+    ) {
+      const topProduct = products[0] || {
+        name: "Dell XPS 15 Gaming",
+        cpu: "Core i7-12700H",
+        ram: "RAM 16GB DDR5",
+        ssd: "1TB SSD NVMe",
+        gpu: "RTX 3060 6GB",
+        sellingPrice: 35000,
+      };
+
+      reply =
+        `✨ **مسودة بوست تسويقي احترافي لصفحتك على الفيسبوك/انستجرام:**\n\n` +
+        `🚀 **وحش الأداء والإنتاجية وصل المحل الآن!** 🔥\n` +
+        `💻 **${topProduct.name}**\n\n` +
+        `🎯 **المواصفات الجبارة:**\n` +
+        `⚡ البروسيسور: ${topProduct.cpu || "Intel Core i7"}\n` +
+        `💾 الذاكرة العشوائية: ${topProduct.ram || "16GB RAM"}\n` +
+        `🚀 الهارد: ${topProduct.ssd || "512GB SSD Fast"}\n` +
+        `🎮 كارت الشاشة: ${topProduct.gpu || "Dedicated Graphics"}\n\n` +
+        `💰 **السعر الخاص:** ${topProduct.sellingPrice.toLocaleString()} جنيه مصري فقط! 😍\n` +
+        `🛡️ **ضمان معتمد 3 شهور ضد عيوب الصناعة + مهلة 14 يوم استبدال!**\n\n` +
+        `📍 **العنوان والطلب:** متوفر الآن بمقرنا (${tenantInfo?.name || "المحل"}).\n` +
+        `📞 **للحجز والاستفسار الفوري:** تواصل معنا عبر الرسائل أو الاتصال مباشرة! ✨`;
+    } else if (
       sanitizedPrompt.includes("ترشيح") ||
       sanitizedPrompt.includes("اقترح") ||
       sanitizedPrompt.includes("جرافيك") ||

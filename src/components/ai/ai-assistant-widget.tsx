@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, X, Send, Bot, User, RefreshCw, MessageSquare, Lightbulb, ShieldCheck, BarChart3, ChevronDown } from "lucide-react";
+import { Sparkles, X, Send, Bot, User, Mic, MicOff, Lightbulb, ShieldCheck, BarChart3, Share2, Megaphone } from "lucide-react";
 
 interface Message {
   sender: "user" | "ai";
@@ -14,12 +14,13 @@ export function AIAssistantWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "ai",
-      text: "🤖 **مرحباً بك! أنا مساعد POS Hub الذكي 🚀**\n\nأنا هنا لمساعدتك في ترشيح أجهزة اللاب توب بالمخزن لعملائك، تحليل المبيعات، ومساعدتك في فحص ضمان السيريال. كيف أستطيع مساعدتك اليوم؟",
+      text: "🤖 **مرحباً بك! أنا مساعد POS Hub الذكي 🚀**\n\nأنا هنا لمساعدتك في ترشيح أجهزة اللاب توب، كتابة بوستات تسويقية للفيسبوك، تحليل المبيعات، ومساعدتك في فحص ضمان السيريال. اضغط المايك 🎙️ للتحدث صوتاً!",
       timestamp: new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -32,6 +33,48 @@ export function AIAssistantWidget() {
       scrollToBottom();
     }
   }, [messages, isOpen]);
+
+  const startVoiceInput = () => {
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("عذراً، متصفحك لا يدعم الإدخال الصوتي المباشر. ننصح بتجربة متصفح Google Chrome.");
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "ar-EG";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsListening(false);
+        handleSendMessage(transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (e) {
+      console.error(e);
+      setIsListening(false);
+    }
+  };
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = textToSend || input;
@@ -101,7 +144,7 @@ export function AIAssistantWidget() {
 
       {/* Slide-Up Chat Window */}
       {isOpen && (
-        <div className="glass-panel w-[90vw] sm:w-[380px] h-[520px] rounded-3xl border border-border/60 shadow-2xl bg-card text-card-foreground flex flex-col overflow-hidden backdrop-blur-2xl animate-in fade-in slide-in-from-bottom-5 duration-300">
+        <div className="glass-panel w-[90vw] sm:w-[380px] h-[530px] rounded-3xl border border-border/60 shadow-2xl bg-card text-card-foreground flex flex-col overflow-hidden backdrop-blur-2xl animate-in fade-in slide-in-from-bottom-5 duration-300">
           {/* Header */}
           <div className="p-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-2.5">
@@ -112,10 +155,10 @@ export function AIAssistantWidget() {
                 <h3 className="font-extrabold text-sm tracking-tight font-heading flex items-center gap-1.5">
                   <span>مساعد POS Hub الذكي</span>
                   <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30">
-                    آمن 100%
+                    صوتي ومؤمن 100%
                   </span>
                 </h3>
-                <p className="text-[10px] text-white/80 font-medium">مساعد المبيعات والمخزون والضمان</p>
+                <p className="text-[10px] text-white/80 font-medium">مساعد المبيعات، التسويق والضمان</p>
               </div>
             </div>
 
@@ -135,6 +178,13 @@ export function AIAssistantWidget() {
             >
               <Lightbulb className="w-3 h-3 text-amber-400" />
               <span>ترشيح أجهزة</span>
+            </button>
+            <button
+              onClick={() => handleChipClick("اكتب بوست تسويقي جذاب لصفحة الفيسبوك لأحد أجهزة المحل")}
+              className="px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 whitespace-nowrap flex items-center gap-1 font-semibold transition-all shrink-0"
+            >
+              <Megaphone className="w-3 h-3 text-amber-400" />
+              <span>بوست تسويقي ✨</span>
             </button>
             <button
               onClick={() => handleChipClick("ما هي الأجهزة الأكثر مبيعاً وأعلى ربحاً؟")}
@@ -194,7 +244,7 @@ export function AIAssistantWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Form */}
+          {/* Input Form with Voice Button */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -202,10 +252,23 @@ export function AIAssistantWidget() {
             }}
             className="p-3 bg-card border-t border-border/40 flex items-center gap-2"
           >
+            <button
+              type="button"
+              onClick={startVoiceInput}
+              title="تحدث صوتاً للمساعد"
+              className={`p-2.5 rounded-2xl border transition-all ${
+                isListening
+                  ? "bg-rose-600 text-white animate-bounce border-rose-500"
+                  : "bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground border-border/50"
+              }`}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 text-blue-400" />}
+            </button>
+
             <input
               type="text"
               maxLength={300}
-              placeholder="اكتب سؤالك هنا لمساعد POS AI..."
+              placeholder={isListening ? "جاري الاستماع لصوتك..." : "اكتب أو تحدث صوتاً للمساعد..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               className="flex-1 p-2.5 rounded-2xl bg-secondary/50 border border-border text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-right"
