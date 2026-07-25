@@ -86,7 +86,7 @@ export async function DELETE(req: Request) {
           profitAmount: sale.profitAmount,
           salespersonName: sale.salespersonName || "الكاشير",
           deletedAt: new Date().toISOString(),
-          items: sale.items.map((i) => ({
+          items: sale.items.map((i: any) => ({
             productName: i.product.name,
             serialNumber: i.serialNumber || i.product.serialNumber,
             unitPrice: i.unitPrice,

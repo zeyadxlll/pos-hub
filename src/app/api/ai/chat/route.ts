@@ -60,14 +60,14 @@ export async function POST(req: Request) {
       sanitizedPrompt.includes("خزنة") ||
       sanitizedPrompt.includes("سجل")
     ) {
-      const deletedSales = auditLogs.filter((log) => log.action === "DELETE_SALE");
+      const deletedSales = auditLogs.filter((log: any) => log.action === "DELETE_SALE");
 
       if (deletedSales.length > 0) {
         reply =
           `🚨 **تقرير المراجعة والأمان الحساس (Audit Log Inspector):**\n\n` +
           `تم رصد **${deletedSales.length} عملية حذف فواتير** بسجلات النظام:\n\n` +
           deletedSales
-            .map((log, idx) => {
+            .map((log: any, idx: number) => {
               let parsed: any = {};
               try {
                 parsed = JSON.parse(log.details || "{}");
