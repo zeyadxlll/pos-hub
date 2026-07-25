@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Globe,
   Lock,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AIAssistantWidget } from "@/components/ai/ai-assistant-widget";
