@@ -147,6 +147,25 @@ export class POSService {
           },
         });
 
+        // Write Audit Log Entry
+        await tx.auditLog.create({
+          data: {
+            tenantId,
+            userId,
+            userName: input.salespersonName || undefined,
+            action: "CREATE_SALE",
+            entity: "Sale",
+            entityId: sale.id,
+            details: JSON.stringify({
+              invoiceNumber,
+              customerName: input.customerName || "عميل كاش",
+              netAmount,
+              profitAmount: totalProfit,
+              itemsCount: processedItems.length,
+            }),
+          },
+        });
+
         // Deduct/Add Cash to Safe ONLY ONCE with Duplicate Check (Idempotency)
         if (paidAmount > 0) {
           const existingTx = await tx.cashTransaction.findFirst({

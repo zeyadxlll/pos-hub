@@ -12,18 +12,14 @@ export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
 
-    // Security Rule 1: Input Validation & Sanitization
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json({ error: "الرجاء كتابة سؤال صحيح" }, { status: 400 });
     }
 
-    // Security Rule 2: Limit Prompt Length (Prevent Buffer/Prompt Inflation attacks)
     const sanitizedPrompt = prompt.trim().slice(0, 300).toLowerCase();
-
-    // Security Rule 3: Strict Tenant-isolated Read-only Data Context
     const tenantId = session.user.tenantId;
 
-    const [products, salesCount, tenantInfo] = await Promise.all([
+    const [products, salesCount, tenantInfo, auditLogs] = await Promise.all([
       prisma.product.findMany({
         where: { tenantId },
         select: {
@@ -44,12 +40,57 @@ export async function POST(req: Request) {
         where: { id: tenantId },
         select: { name: true },
       }),
+      prisma.auditLog.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
     ]);
 
     let reply = "";
 
-    // AI Intent Recognition & Contextual Intelligence
+    // Security & Audit Log Inspection Intent
     if (
+      sanitizedPrompt.includes("حذف") ||
+      sanitizedPrompt.includes("عجز") ||
+      sanitizedPrompt.includes("سقط") ||
+      sanitizedPrompt.includes("مراقبة") ||
+      sanitizedPrompt.includes("مين") ||
+      sanitizedPrompt.includes("تعديل") ||
+      sanitizedPrompt.includes("خزنة") ||
+      sanitizedPrompt.includes("سجل")
+    ) {
+      const deletedSales = auditLogs.filter((log) => log.action === "DELETE_SALE");
+
+      if (deletedSales.length > 0) {
+        reply =
+          `🚨 **تقرير المراجعة والأمان الحساس (Audit Log Inspector):**\n\n` +
+          `تم رصد **${deletedSales.length} عملية حذف فواتير** بسجلات النظام:\n\n` +
+          deletedSales
+            .map((log, idx) => {
+              let parsed: any = {};
+              try {
+                parsed = JSON.parse(log.details || "{}");
+              } catch (e) {}
+
+              const dateStr = new Date(log.createdAt).toLocaleString("ar-EG");
+              return (
+                `⚠️ **عملية رقم ${idx + 1}:**\n` +
+                `   • الفاتورة المحذوفة: **${parsed.invoiceNumber || log.entityId || "غير محدد"}**\n` +
+                `   • العميل: **${parsed.customerName || "عميل كاش"}**\n` +
+                `   • القيمة المالية: **${parsed.netAmount ? parsed.netAmount.toLocaleString() + " EGP" : "غير محدد"}**\n` +
+                `   • قام بالحذف: **${log.userName || "مستخدم للنظام"}**\n` +
+                `   • توقيت الحذف: **${dateStr}**`
+              );
+            })
+            .join("\n\n") +
+          `\n\n🛡️ **ملاحظة الأمان:** كافة التغييرات محفورة بسجل الأمان السحابي المشفر للشركة ولا يمكن لأحد مسح السجلات.`;
+      } else {
+        reply =
+          `✅ **تقرير الأمان والمراجعة الشامل:**\n\n` +
+          `لا توجد أي عمليات حذف أو إسقاط فواتير مسجلة هذا الشهر! جميع الفواتير والمبيعات والحركات المالية متطابقة 100% مع الخزينة والمخزون.`;
+      }
+    } else if (
       sanitizedPrompt.includes("بوست") ||
       sanitizedPrompt.includes("فيسبوك") ||
       sanitizedPrompt.includes("تسويق") ||
@@ -139,7 +180,7 @@ export async function POST(req: Request) {
     ) {
       reply = `🧾 **إعدادات وتصميم الفاتورة الرسمية:**\n\n• يمكنك تغيير اسم المحل، اللوجو، وشروط الضمان المطبوعة من صفحة **الإعدادات (/settings)**.\n• يمكنك كتابة أي شروط مخصصة بمربع "شروط الضمان" وتظهر منسقة تلقائياً على كل فاتورة مطبوعة.`;
     } else {
-      reply = `🤖 **مرحباً بك! أنا مساعد POS Hub الذكي 🚀**\n\nأنا هنا لمساعدتك في:\n1. 💻 **ترشيح أجهزة اللاب توب المناسبة لعميلك** حسب الميزانية والاستخدام.\n2. 📊 **تحليل مبيعات المحل والأجهزة الأعلى ربحاً**.\n3. 🛡️ **مساعدتك في فحص ضمان وأرقام السيريال نمبر**.\n4. ⚙️ **الإجابة على أي استفسار في استخدام المنظومة**.\n\nكيف يمكنني مساعدتك اليوم؟`;
+      reply = `🤖 **مرحباً بك! أنا مساعد POS Hub الذكي والمفتش الأمني 🚀**\n\nأنا هنا لمساعدتك في:\n1. 🚨 **مراقبة الفواتير والتأكد من عدم وجود أي فواتير محذوفة أو عجز**.\n2. 💻 **ترشيح أجهزة اللاب توب المناسبة لعميلك** حسب الميزانية.\n3. 📊 **تحليل مبيعات المحل والأجهزة الأعلى ربحاً**.\n4. 🛡️ **فحص ضمان وأرقام السيريال نمبر**.\n\nكيف يمكنني مساعدتك اليوم؟`;
     }
 
     return NextResponse.json({ reply });

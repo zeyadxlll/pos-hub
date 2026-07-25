@@ -173,6 +173,13 @@ export function AIAssistantWidget() {
           {/* Quick Suggestion Chips */}
           <div className="p-2.5 bg-secondary/30 border-b border-border/40 flex items-center gap-1.5 overflow-x-auto text-[11px] scrollbar-none">
             <button
+              onClick={() => handleChipClick("هل توجد فواتير محذوفة أو عجز؟ افحص سجل المحذوفات والمراجعة الأمنيّة")}
+              className="px-2.5 py-1 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 whitespace-nowrap flex items-center gap-1 font-extrabold transition-all shrink-0"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-rose-400" />
+              <span>سجل المحذوفات والأمان 🚨</span>
+            </button>
+            <button
               onClick={() => handleChipClick("اقترح أجهزة لاب توب بمخزني")}
               className="px-2.5 py-1 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 whitespace-nowrap flex items-center gap-1 font-semibold transition-all shrink-0"
             >

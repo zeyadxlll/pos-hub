@@ -125,6 +125,7 @@ model AuditLog {
   id        String   @id @default(cuid())
   tenantId  String?
   userId    String?
+  userName  String?
   action    String
   entity    String
   entityId  String?
