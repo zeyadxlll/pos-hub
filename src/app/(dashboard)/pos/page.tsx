@@ -62,6 +62,31 @@ export default function POSTerminalPage() {
   const [archiveSearch, setArchiveSearch] = useState("");
   const [archiveLoading, setArchiveLoading] = useState(false);
 
+  // Load draft cart & customer info from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem("pos_draft_cart");
+      const savedCustName = localStorage.getItem("pos_draft_cust_name");
+      const savedCustPhone = localStorage.getItem("pos_draft_cust_phone");
+      if (savedCart) setCart(JSON.parse(savedCart));
+      if (savedCustName) setCustomerName(savedCustName);
+      if (savedCustPhone) setCustomerPhone(savedCustPhone);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  // Auto-save draft cart & customer details to localStorage on state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem("pos_draft_cart", JSON.stringify(cart));
+      localStorage.setItem("pos_draft_cust_name", customerName);
+      localStorage.setItem("pos_draft_cust_phone", customerPhone);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [cart, customerName, customerPhone]);
+
   useEffect(() => {
     fetchProducts();
   }, [search]);

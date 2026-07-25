@@ -16,6 +16,7 @@ import {
   CreditCard,
   Settings,
   ShieldAlert,
+  ShieldCheck,
   LogOut,
   Moon,
   Sun,
@@ -58,7 +59,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
 
     if (isCashierOrSales) {
-      const allowedPaths = ["/pos", "/products"];
+      const allowedPaths = ["/pos", "/products", "/warranty-check"];
       if (!allowedPaths.includes(pathname)) {
         router.push("/pos");
       }
@@ -69,6 +70,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: t("dashboard"), href: "/dashboard", icon: LayoutDashboard },
     { name: t("posTerminal"), href: "/pos", icon: ShoppingCart },
     { name: t("laptopInventory"), href: "/products", icon: Laptop },
+    { name: "تتبع الضمان بالسيريال", href: "/warranty-check", icon: ShieldCheck },
     { name: t("purchaseOrders"), href: "/purchases", icon: Truck },
     { name: t("financeCash"), href: "/finance", icon: Wallet },
     { name: t("reportsAnalytics"), href: "/reports", icon: BarChart3 },
