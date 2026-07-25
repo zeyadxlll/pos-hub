@@ -18,9 +18,11 @@ export default function AdminDashboardPage() {
     transferNumber: "01001234567",
     whatsappNumber: "01001234567",
     instructionNote: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
-    originalPrice: 500,
-    discountPrice: 350,
-    promoBanner: "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
+    monthlyOriginalPrice: 500,
+    monthlyDiscountPrice: 350,
+    yearlyOriginalPrice: 5000,
+    yearlyDiscountPrice: 3500,
+    promoBanner: "🔥 عرض خاص لفترة محدودة: خصم 30% على الاشتراك الشهري والسنوي للمنظومة!",
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMsg, setSettingsMsg] = useState<string | null>(null);
@@ -62,9 +64,11 @@ export default function AdminDashboardPage() {
           transferNumber: data.transferNumber || "01001234567",
           whatsappNumber: data.whatsappNumber || "01001234567",
           instructionNote: data.instructionNote || "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
-          originalPrice: Number(data.originalPrice || 500),
-          discountPrice: Number(data.discountPrice || 350),
-          promoBanner: data.promoBanner || "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
+          monthlyOriginalPrice: Number(data.monthlyOriginalPrice || 500),
+          monthlyDiscountPrice: Number(data.monthlyDiscountPrice || 350),
+          yearlyOriginalPrice: Number(data.yearlyOriginalPrice || 5000),
+          yearlyDiscountPrice: Number(data.yearlyDiscountPrice || 3500),
+          promoBanner: data.promoBanner || "🔥 عرض خاص لفترة محدودة: خصم 30% على الاشتراك الشهري والسنوي للمنظومة!",
         });
       }
     } catch (err) {
@@ -85,7 +89,7 @@ export default function AdminDashboardPage() {
       });
 
       if (res.ok) {
-        setSettingsMsg("تم حفظ أرقام التحويل وأسعار الاشتراك والعروض الترويجية بنجاح!");
+        setSettingsMsg("تم حفظ أسعار الخطط التنافسية وأرقام التحويل والعروض بنجاح!");
       } else {
         const d = await res.json();
         alert(d.error || "فشل الحفظ");
@@ -158,7 +162,7 @@ export default function AdminDashboardPage() {
             <span>لوحة التحكم الفائقة للمنصة (SuperAdmin)</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            إدارة كافة الشركات والمحلات المسجلة، ضبط أسعار الاشتراك، العروض الترويجية، أرقام تحويل انستاباي، وتوليد وحذف التراخيص.
+            إدارة كافة الشركات والمحلات المسجلة، تعديل أسعار خطط الاشتراكات (شهري وسنوي)، العروض الترويجية، وأرقام التحويلات.
           </p>
         </div>
 
@@ -168,10 +172,10 @@ export default function AdminDashboardPage() {
             <div>
               <h3 className="font-bold text-base text-foreground font-heading flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-emerald-400" />
-                <span>إعدادات أسعار الاشتراكات والعروض الترويجية وأرقام التحويلات</span>
+                <span>إعدادات أسعار خطط الاشتراكات والعروض الترويجية وأرقام التحويلات</span>
               </h3>
               <p className="text-xs text-muted-foreground">
-                تحكم في أسعار الاشتراك والتخصيمات والتنبيهات المباشرة التي تظهر للعملاء غير المشتركين.
+                تحكم في أسعار الخطتين (الشهرية والسنوية)، التخصيمات، والتنبيهات المباشرة التي تظهر للعملاء غير المشتركين.
               </p>
             </div>
 
@@ -181,7 +185,7 @@ export default function AdminDashboardPage() {
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center gap-1.5"
             >
               <Save className="w-4 h-4" />
-              <span>{settingsSaving ? "جاري الحفظ..." : "حفظ الإعدادات والعروض"}</span>
+              <span>{settingsSaving ? "جاري الحفظ..." : "حفظ أسعار الخطط والعروض"}</span>
             </button>
           </div>
 
@@ -192,7 +196,7 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="text-xs font-semibold flex items-center gap-1">
                 <Phone className="w-3.5 h-3.5 text-blue-400" />
@@ -210,7 +214,7 @@ export default function AdminDashboardPage() {
             <div>
               <label className="text-xs font-semibold flex items-center gap-1">
                 <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                <span>رقم الواتساب الرسمي لاستلام إشعارات التحويل</span>
+                <span>رقم الواتساب الرسمي لاستلام الإشعارات</span>
               </label>
               <input
                 type="text"
@@ -221,8 +225,8 @@ export default function AdminDashboardPage() {
               />
             </div>
 
-            <div>
-              <label className="text-xs font-semibold">نص التعليمات الظاهر للعميل</label>
+            <div className="md:col-span-2">
+              <label className="text-xs font-semibold">نص التعليمات الظاهر للعميل عند التحويل</label>
               <input
                 type="text"
                 required
@@ -232,32 +236,60 @@ export default function AdminDashboardPage() {
               />
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground">سعر الاشتراك الأساسي (EGP)</label>
-              <input
-                type="number"
-                required
-                value={platformSettings.originalPrice}
-                onChange={(e) => setPlatformSettings({ ...platformSettings, originalPrice: Number(e.target.value) })}
-                className="w-full mt-1.5 p-2.5 rounded-xl bg-secondary/40 border border-border text-xs text-foreground font-mono text-right"
-              />
+            {/* Monthly Pricing Inputs */}
+            <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-2">
+              <span className="text-xs font-extrabold text-blue-400 block">📅 الخطة الشهرية (Monthly Plan)</span>
+              <div>
+                <label className="text-[10px] font-semibold text-muted-foreground block">السعر الأساسي (EGP)</label>
+                <input
+                  type="number"
+                  required
+                  value={platformSettings.monthlyOriginalPrice}
+                  onChange={(e) => setPlatformSettings({ ...platformSettings, monthlyOriginalPrice: Number(e.target.value) })}
+                  className="w-full mt-1 p-2 rounded-lg bg-background border border-border text-xs font-mono text-right"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-emerald-400 block">السعر بعد الخصم والعرض (EGP)</label>
+                <input
+                  type="number"
+                  required
+                  value={platformSettings.monthlyDiscountPrice}
+                  onChange={(e) => setPlatformSettings({ ...platformSettings, monthlyDiscountPrice: Number(e.target.value) })}
+                  className="w-full mt-1 p-2 rounded-lg bg-background border border-emerald-500/40 text-xs font-bold text-emerald-400 font-mono text-right"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-emerald-400">سعر الاشتراك بعد الخصم والعرض (EGP)</label>
-              <input
-                type="number"
-                required
-                value={platformSettings.discountPrice}
-                onChange={(e) => setPlatformSettings({ ...platformSettings, discountPrice: Number(e.target.value) })}
-                className="w-full mt-1.5 p-2.5 rounded-xl bg-secondary/40 border border-border text-xs font-bold text-emerald-400 font-mono text-right"
-              />
+            {/* Yearly Pricing Inputs */}
+            <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-2">
+              <span className="text-xs font-extrabold text-purple-400 block">👑 الخطة السنوية (Yearly Plan)</span>
+              <div>
+                <label className="text-[10px] font-semibold text-muted-foreground block">السعر الأساسي (EGP)</label>
+                <input
+                  type="number"
+                  required
+                  value={platformSettings.yearlyOriginalPrice}
+                  onChange={(e) => setPlatformSettings({ ...platformSettings, yearlyOriginalPrice: Number(e.target.value) })}
+                  className="w-full mt-1 p-2 rounded-lg bg-background border border-border text-xs font-mono text-right"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-purple-400 block">السعر بعد الخصم والعرض (EGP)</label>
+                <input
+                  type="number"
+                  required
+                  value={platformSettings.yearlyDiscountPrice}
+                  onChange={(e) => setPlatformSettings({ ...platformSettings, yearlyDiscountPrice: Number(e.target.value) })}
+                  className="w-full mt-1 p-2 rounded-lg bg-background border border-purple-500/40 text-xs font-bold text-purple-400 font-mono text-right"
+                />
+              </div>
             </div>
 
-            <div className="md:col-span-3">
-              <label className="text-xs font-bold text-amber-400">نص العرض الترويجي والتنبيه التنافسي (يظهر كـ Banner تنبيه للعملاء غير المشتركين)</label>
-              <input
-                type="text"
+            <div className="md:col-span-2 lg:col-span-2">
+              <label className="text-xs font-bold text-amber-400 block">نص العرض الترويجي والتنبيه التنافسي (Banner للعملاء غير المشتركين)</label>
+              <textarea
+                rows={4}
                 required
                 value={platformSettings.promoBanner}
                 onChange={(e) => setPlatformSettings({ ...platformSettings, promoBanner: e.target.value })}

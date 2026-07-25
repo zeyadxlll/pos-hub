@@ -34,9 +34,11 @@ export async function GET() {
       transferNumber: "01001234567",
       whatsappNumber: "01001234567",
       instructionNote: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
-      originalPrice: 500,
-      discountPrice: 350,
-      promoBanner: "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
+      monthlyOriginalPrice: 500,
+      monthlyDiscountPrice: 350,
+      yearlyOriginalPrice: 5000,
+      yearlyDiscountPrice: 3500,
+      promoBanner: "🔥 عرض خاص لفترة محدودة: خصم 30% على الاشتراك الشهري والسنوي للمنظومة!",
     };
 
     if (!settings) {
@@ -60,28 +62,25 @@ export async function GET() {
         transferNumber: parsed.transferNumber || settings.thermalReceiptHeader || defaultData.transferNumber,
         whatsappNumber: parsed.whatsappNumber || settings.thermalReceiptFooter || defaultData.whatsappNumber,
         instructionNote: parsed.instructionNote || settings.logo || defaultData.instructionNote,
-        originalPrice: Number(parsed.originalPrice || 500),
-        discountPrice: Number(parsed.discountPrice || 350),
+        monthlyOriginalPrice: Number(parsed.monthlyOriginalPrice || parsed.originalPrice || 500),
+        monthlyDiscountPrice: Number(parsed.monthlyDiscountPrice || parsed.discountPrice || 350),
+        yearlyOriginalPrice: Number(parsed.yearlyOriginalPrice || 5000),
+        yearlyDiscountPrice: Number(parsed.yearlyDiscountPrice || 3500),
         promoBanner: parsed.promoBanner || defaultData.promoBanner,
       });
     } catch {
-      return NextResponse.json({
-        transferNumber: settings.thermalReceiptHeader || defaultData.transferNumber,
-        whatsappNumber: settings.thermalReceiptFooter || defaultData.whatsappNumber,
-        instructionNote: settings.logo || defaultData.instructionNote,
-        originalPrice: 500,
-        discountPrice: 350,
-        promoBanner: defaultData.promoBanner,
-      });
+      return NextResponse.json(defaultData);
     }
   } catch (error: any) {
     return NextResponse.json({
       transferNumber: "01001234567",
       whatsappNumber: "01001234567",
       instructionNote: "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
-      originalPrice: 500,
-      discountPrice: 350,
-      promoBanner: "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج واستمتع بالمنظومة فوراً!",
+      monthlyOriginalPrice: 500,
+      monthlyDiscountPrice: 350,
+      yearlyOriginalPrice: 5000,
+      yearlyDiscountPrice: 3500,
+      promoBanner: "🔥 عرض خاص لفترة محدودة: خصم 30% على الاشتراك الشهري والسنوي للمنظومة!",
     });
   }
 }
@@ -100,14 +99,16 @@ export async function PUT(req: Request) {
       transferNumber: body.transferNumber || "01001234567",
       whatsappNumber: body.whatsappNumber || "01001234567",
       instructionNote: body.instructionNote || "بعد تحويل المبلغ يرجى إرسال صورة إشعار التحويل على رقم الواتساب لفتح النظام فوراً",
-      originalPrice: Number(body.originalPrice || 500),
-      discountPrice: Number(body.discountPrice || 350),
-      promoBanner: body.promoBanner || "🔥 عرض خاص لفترة محدودة: اشترك الآن بـ 350 ج بدلاً من 500 ج!",
+      monthlyOriginalPrice: Number(body.monthlyOriginalPrice || 500),
+      monthlyDiscountPrice: Number(body.monthlyDiscountPrice || 350),
+      yearlyOriginalPrice: Number(body.yearlyOriginalPrice || 5000),
+      yearlyDiscountPrice: Number(body.yearlyDiscountPrice || 3500),
+      promoBanner: body.promoBanner || "🔥 عرض خاص لفترة محدودة: خصم 30% على الاشتراك الشهري والسنوي!",
     };
 
     const jsonString = JSON.stringify(payload);
 
-    const updated = await prisma.companySettings.upsert({
+    await prisma.companySettings.upsert({
       where: { tenantId: SYSTEM_TENANT_ID },
       update: {
         companyName: jsonString,
