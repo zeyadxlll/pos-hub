@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { formatCurrency, formatDate } from "@/lib/utils";
