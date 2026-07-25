@@ -27,6 +27,7 @@ import {
   Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AIAssistantWidget } from "@/components/ai/ai-assistant-widget";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -257,6 +258,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page Viewport */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8">{children}</main>
+
+        {/* Hack-Proof Embedded AI Assistant Widget */}
+        <AIAssistantWidget />
       </div>
     </div>
   );
